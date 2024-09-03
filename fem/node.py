@@ -13,6 +13,7 @@ class Node:
         self.displacement = [0.0] * dof  # Displacement vector initialized to zero
         self.force = [0.0] * dof         # Force vector initialized to zero
         self.boundary_conditions = [None] * dof  # None indicates no BC applied
+        self.global_dof = [None] * dof
 
     def apply_force(self, force):
         """

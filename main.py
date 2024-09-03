@@ -1,8 +1,12 @@
 import numpy as np
-from fem.nodes import Node
-from fem.elements import Element
+from fem.node import Node
+from fem.element import Element
 from fem.material import Material
-from fem.properties import Property
+from fem.property import Property
+from fem.load import NodalLoad
+from fem.constraint import NodalConstraint
+from fem.model import Model
+from fem.analysis import Analysis
 
 nodes = [
     Node(0, [0,0]),
@@ -20,8 +24,30 @@ elements = [
     Element(1,[nodes[1], nodes[2]], property=rod),
     Element(2,[nodes[0], nodes[3]], property=rod),
     Element(3,[nodes[1], nodes[3]], property=rod),
-    Element(4,[nodes[3], nodes[2]], property=rod)
+    Element(4,[nodes[2], nodes[3]], property=rod)
 ]
 
+constraints = [
+    NodalConstraint(0, [1,2], [0,0]),
+    NodalConstraint(2, 1, 0)
+    
+]
+
+loads = [
+    NodalLoad(3,[1,2],[-30,20])
+]
+
+model = Model(
+    nodes=nodes,
+    materials=[alluminum],
+    properties=[rod],
+    elements=elements,
+    loads=loads,
+    constraints=constraints
+)
+
+analysis = Analysis(model)
 
 
+for element in elements:
+    print(element)
