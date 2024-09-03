@@ -71,7 +71,7 @@ Contributions are welcome! Please follow these steps:
 3. Commit your changes.
 4. Push to the feature branch.
 5. Open a pull request.
-Please ensure that your code adheres to the existing style and includes tests for new features.
+Please ensure that your code adheres to the existing style.
 
 
 
