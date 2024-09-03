@@ -3,3 +3,5 @@ class NodalLoad:
         self.node = node
         self.dof = dof
         self.value = value
+    def __repr__(self):
+        return f"Nodal load(node={self.node}, dof={self.dof}, value={self.value})"

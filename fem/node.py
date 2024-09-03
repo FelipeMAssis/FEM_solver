@@ -14,6 +14,7 @@ class Node:
         self.force = [0.0] * dof         # Force vector initialized to zero
         self.boundary_conditions = [None] * dof  # None indicates no BC applied
         self.global_dof = [None] * dof
+        self.dposition = [0.0] * dof
 
     def apply_force(self, force):
         """
