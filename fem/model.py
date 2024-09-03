@@ -89,7 +89,16 @@ class Model:
         """
         for node in self.nodes:
             for i in range(node.dof):
-                node.displacement[i] = self.q[node.global_dof[i]]
+                node.displacement[i] = float(self.q[node.global_dof[i]])
+    
+    def calculate_forces(self):
+        """
+        Update the displacement for each node based on the global displacement vector.
+        """
+        for node in self.nodes:
+            for i in range(node.dof):
+                node.force[i] = float(self.F[node.global_dof[i]])
+
 
     def get_positions(self):
         """
@@ -129,6 +138,33 @@ class Model:
         plt.title('Undeformed and Deformed Shapes')
         plt.axis('equal')  # Ensure aspect ratio is equal to show accurate deformations
         plt.show()
+
+    def generate_report(self):
+        report = f"Model Report: {self.name}\n"
+        report += f"  Number of Nodes       : {len(self.nodes)}\n"
+        report += f"  Number of Elements    : {len(self.elements)}\n"
+        report += f"  Number of Materials   : {len(self.materials)}\n"
+        report += f"  Number of Properties  : {len(self.properties)}\n"
+        report += f"  Number of Loads       : {len(self.loads)}\n"
+        report += f"  Number of Constraints : {len(self.constraints)}\n"
+        report += f"  Global DOF            : {self.K.shape[0] if self.K is not None else 'Not assigned'}\n"
+
+        # Displacements
+        report += "\n  Displacements:\n"
+        report += "  ----------------------\n"
+        for i, node in enumerate(self.nodes):
+            disp = node.displacement
+            report += f"    Node {i}: X = {disp[0]:.2f}, Y = {disp[1]:.2f}\n"
+
+        # Forces
+        # Displacements
+        report += "\n  Forces:\n"
+        report += "  ----------------------\n"
+        for i, node in enumerate(self.nodes):
+            force = node.force
+            report += f"    Node {i}: X = {force[0]:.2f}, Y = {force[1]:.2f}\n"
+        
+        print(report)
 
 
     def __repr__(self):

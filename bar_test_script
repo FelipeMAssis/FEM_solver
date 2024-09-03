@@ -1,53 +1,51 @@
 import numpy as np
 from fem.node import Node
-from fem.element import RodElement
+from fem.element import BarElement
 from fem.material import Material
-from fem.property import Rod
+from fem.property import Bar2D
 from fem.boundary_condition import NodalConstraint, NodalLoad
 from fem.model import Model
 
 def run_test_case():
     # Define nodes
     nodes = [
-        Node(0, [0, 0]),
-        Node(1, [1200, 300]),
-        Node(2, [2400, 0]),
-        Node(3, [1200, 800])
+        Node(0, [0, 0], 3),
+        Node(1, [0, 1000], 3),
+        Node(2, [1000, 0], 3)
     ]
 
     # Define material
     aluminum = Material(0, "Alluminum", 80000)
 
     # Define property
-    rod = Rod(0, "MyRod", aluminum, 100)
+    bar = Bar2D(0, "MyRod", aluminum, 100, 10000/12)
 
     # Define elements
     elements = [
-        RodElement(0, [nodes[0], nodes[1]], property=rod),
-        RodElement(1, [nodes[1], nodes[2]], property=rod),
-        RodElement(2, [nodes[0], nodes[3]], property=rod),
-        RodElement(3, [nodes[1], nodes[3]], property=rod),
-        RodElement(4, [nodes[2], nodes[3]], property=rod)
+        BarElement(0, [nodes[0], nodes[1]], property=bar),
+        BarElement(1, [nodes[1], nodes[2]], property=bar),
     ]
 
     # Define constraints
     constraints = [
         NodalConstraint(0, 0, 0),
         NodalConstraint(0, 1, 0),
-        NodalConstraint(2, 1, 0)
+        NodalConstraint(0, 2, 0),
+        NodalConstraint(2, 0, 0),
+        NodalConstraint(2, 1, 0),
+        NodalConstraint(2, 2, 0)
     ]
 
     # Define loads
     loads = [
-        NodalLoad(3, 0, -30000),
-        NodalLoad(3, 1, 20000),
+        NodalLoad(1, 0, -10000),
     ]
 
     # Create model
     model = Model(
         nodes=nodes,
         materials=[aluminum],
-        properties=[rod],
+        properties=[bar],
         elements=elements,
         loads=loads,
         constraints=constraints
@@ -61,8 +59,6 @@ def run_test_case():
     model.solve()
     model.calculate_displacements()
     model.calculate_forces()
-    u = model.elements[0].get_local_displacement()
-
     # Print results
     model.generate_report()
     model.plot(factor=1)

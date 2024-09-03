@@ -11,6 +11,7 @@ class Node:
         self.position = position
         self.dof = dof
         self.displacement = [0.0] * dof
+        self.force = [None] * dof
         self.global_dof = [None] * dof
 
     def __repr__(self):

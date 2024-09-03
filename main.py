@@ -29,17 +29,31 @@ def get_nodes():
         nodes.append(Node(i, [x, y]))
     return nodes
 
-def get_material():
-    material_id = get_input("Enter material ID: ", int)
-    youngs_modulus = get_input("Enter Young's modulus (e.g., 200000): ", float)
-    return Material(material_id, youngs_modulus)
+def get_materials():
+    num_materials = get_input("Enter the number of materials: ", int)
+    materials = []
+    for i in range(num_materials):
+        name = get_input("Enter material name (e.g., Steel): ", str)
+        youngs_modulus = get_input("Enter Young's modulus (e.g., 200000): ", float)
+        materials.append(Material(i, name, youngs_modulus))
+    return materials
 
-def get_property(material):
-    property_id = get_input("Enter property ID: ", int)
-    area = get_input("Enter cross-sectional area (e.g., 10.0): ", float)
-    return Rod(property_id, material, area)
+def get_properties(materials):
+    num_properties = get_input("Enter the number of properties: ", int)
+    properties = []
+    for i in range(num_properties):
+        name = get_input("Enter property name (e.g., MyRod): ", str)
+        material_id = get_input("Enter material ID for this property: ", int)
+        area = get_input("Enter cross-sectional area (e.g., 10.0): ", float)
+        # Find the material with the given ID
+        material = next((m for m in materials if m.material_id == material_id), None)
+        if material is None:
+            print(f"No material found with ID {material_id}.")
+            continue
+        properties.append(Rod(i, name, material, area))
+    return properties
 
-def get_elements(nodes, rod_property):
+def get_elements(nodes, properties):
     num_elements = get_input("Enter the number of elements: ", int)
     elements = []
     for i in range(num_elements):
@@ -47,7 +61,12 @@ def get_elements(nodes, rod_property):
         if len(node_ids) < 2:
             print("An element must connect at least two nodes.")
             continue
-        elements.append(Element(i, [nodes[id_] for id_ in node_ids], property=rod_property))
+        property_id = get_input("Enter property ID for this element: ", int)
+        property = next((p for p in properties if p.property_id == property_id), None)
+        if property is None:
+            print(f"No property found with ID {property_id}.")
+            continue
+        elements.append(Element(i, [nodes[id_] for id_ in node_ids], property=property))
     return elements
 
 def get_constraints():
@@ -75,17 +94,17 @@ def main():
     
     # Get input from user
     nodes = get_nodes()
-    material = get_material()
-    rod_property = get_property(material)
-    elements = get_elements(nodes, rod_property)
+    materials = get_materials()
+    properties = get_properties(materials)
+    elements = get_elements(nodes, properties)
     constraints = get_constraints()
     loads = get_loads()
 
     # Create and run the model
     model = Model(
         nodes=nodes,
-        materials=[material],
-        properties=[rod_property],
+        materials=materials,
+        properties=properties,
         elements=elements,
         loads=loads,
         constraints=constraints
@@ -97,11 +116,11 @@ def main():
     model.assemble_force_vector()
     model.solve()
     model.calculate_displacements()
+    model.calculate_forces()
 
     # Print results
-    print("\nDisplacements:\n", model.q)
+    model.generate_report()
     model.plot(factor=1)
 
 if __name__ == "__main__":
     main()
-
