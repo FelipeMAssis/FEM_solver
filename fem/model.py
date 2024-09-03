@@ -109,20 +109,27 @@ class Model:
             dYY.append(dyy)
         return XX, YY, dXX, dYY
     
-    def plot(self, factor=0):
+    def plot(self, factor=1.0):
         """
         Plot the undeformed and deformed shapes of the model.
         
         :param factor: Scale factor for the deformed shape.
         """
-        plt.figure()
+        plt.figure(figsize=(10, 8))
         XX, YY, dXX, dYY = self.get_positions()
+        
         for xx, yy, dxx, dyy in zip(XX, YY, dXX, dYY):
-            plt.plot(xx, yy, ':', color='gray')  # Undeformed shape
+            plt.plot(xx, yy, 'o--', color='gray', label='Undeformed Shape')  # Undeformed shape
             plt.plot([x + factor * dx for x, dx in zip(xx, dxx)], 
-                     [y + factor * dy for y, dy in zip(yy, dyy)], 
-                     color='blue')  # Deformed shape
+                    [y + factor * dy for y, dy in zip(yy, dyy)], 
+                    'o-', color='blue', label='Deformed Shape')  # Deformed shape
+        
+        plt.xlabel('X Coordinate')
+        plt.ylabel('Y Coordinate')
+        plt.title('Undeformed and Deformed Shapes')
+        plt.axis('equal')  # Ensure aspect ratio is equal to show accurate deformations
         plt.show()
+
 
     def __repr__(self):
         return (f"Model: {self.name}\n"
