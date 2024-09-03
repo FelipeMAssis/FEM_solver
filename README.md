@@ -10,7 +10,6 @@ This repository contains a finite element model (FEM) analysis framework. It all
   - [Interactive Script](#interactive-script)
 - [Example Input](#example-input)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Installation
 
