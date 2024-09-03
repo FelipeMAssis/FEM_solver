@@ -7,59 +7,42 @@ class Element:
         
         :param element_id: Unique identifier for the element.
         :param nodes: List of Node objects that form the element.
-        :param material: Property object.
+        :param property: Property object.
         """
         self.element_id = element_id
         self.nodes = nodes
         self.property = property
+        
         self.length = self.calculate_length()
         self.theta = self.calculate_rotation()
         self.T = self.calculate_rotation_matrix()
         self.K = self.calculate_stiffness_matrix()
-        self.K_global_coord = np.dot(self.T.transpose(),np.dot(self.K,self.T))
+        self.K_global_coord = self.T.T @ self.K @ self.T
 
     def calculate_length(self):
         """
         Calculate the length of the element (assuming 2D for simplicity).
         """
-        return np.sqrt(
-            (self.nodes[1].position[0] - self.nodes[0].position[0])**2 + 
-            (self.nodes[1].position[1] - self.nodes[0].position[1])**2
-        )
+        x0, y0 = self.nodes[0].position
+        x1, y1 = self.nodes[1].position
+        return np.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
     
     def calculate_rotation(self):
         """
-        Calculate the rotation of the element (assuming 2D for simplicity).
+        Calculate the rotation angle of the element (assuming 2D for simplicity).
         """
-        if self.nodes[1].position[0]>self.nodes[0].position[0] and self.nodes[1].position[1]>=self.nodes[0].position[1]: # 1st quadrant
-            return np.arctan(
-                (self.nodes[1].position[1] - self.nodes[0].position[1])/
-                (self.nodes[1].position[0] - self.nodes[0].position[0])
-            )
-        elif self.nodes[1].position[0]<self.nodes[0].position[0] and self.nodes[1].position[1]>=self.nodes[0].position[1]: # 2nd quadrant
-            return np.pi+np.arctan(
-                (self.nodes[1].position[1] - self.nodes[0].position[1])/
-                (self.nodes[1].position[0] - self.nodes[0].position[0])
-            )
-        elif self.nodes[1].position[0]<self.nodes[0].position[0] and self.nodes[1].position[1]<=self.nodes[0].position[1]: # 3rd quadrant
-            return np.pi+np.arctan(
-                (self.nodes[1].position[1] - self.nodes[0].position[1])/
-                (self.nodes[1].position[0] - self.nodes[0].position[0])
-            )
-        elif self.nodes[1].position[0]>self.nodes[0].position[0] and self.nodes[1].position[1]<=self.nodes[0].position[1]: # 4th quadrant
-            return 2*np.pi+np.arctan(
-                (self.nodes[1].position[1] - self.nodes[0].position[1])/
-                (self.nodes[1].position[0] - self.nodes[0].position[0])
-            )
-        elif self.nodes[1].position[0]==self.nodes[0].position[0] and self.nodes[1].position[1]>self.nodes[0].position[1]: # 90°
-            return np.pi/2
-        else:
-            return np.pi*1.5
-        
+        x0, y0 = self.nodes[0].position
+        x1, y1 = self.nodes[1].position
+        return np.arctan2(y1 - y0, x1 - x0)
+    
     def calculate_rotation_matrix(self):
-        return np.array([[np.cos(self.theta), np.sin(self.theta), 0, 0],
-                         [0, 0, np.cos(self.theta), np.sin(self.theta)]])
-
+        """
+        Calculate the rotation matrix for the element.
+        """
+        cos_theta = np.cos(self.theta)
+        sin_theta = np.sin(self.theta)
+        return np.array([[cos_theta, sin_theta, 0, 0],
+                         [0, 0, cos_theta, sin_theta]])
 
     def calculate_stiffness_matrix(self):
         """
@@ -73,9 +56,8 @@ class Element:
         k = (E * A) / L
 
         # 2x2 stiffness matrix for a 1D rod element
-        stiffness_matrix = k * np.array([[1, -1],
-                                         [-1, 1]])
-        return stiffness_matrix
+        return k * np.array([[1, -1],
+                             [-1, 1]])
 
     def __repr__(self):
-        return f"Element(id={self.element_id}, nodes={[n.node_id for n in self.nodes]}, length={self.length}, rotation={np.degrees(self.theta)}°)"
+        return f"Element(id={self.element_id}, nodes={[n.node_id for n in self.nodes]}, length={self.length:.2f}, rotation={np.degrees(self.theta):.2f}°)"
