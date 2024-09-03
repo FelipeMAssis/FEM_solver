@@ -18,9 +18,10 @@ To use this FEM analysis framework, follow these steps:
 
 1. **Clone the repository:**
 
-   ```bash
-   git clone https://github.com/yourusername/fem-model-analysis.git
-   cd fem-model-analysis
+    ```bash
+    git clone https://github.com/FelipeMAssis/FEM_solver.git
+    cd FEM_solver
+    ```
 
 2. **Install dependencies:**
 
@@ -28,11 +29,13 @@ To use this FEM analysis framework, follow these steps:
 
     ```bash
     pip install -r requirements.txt
+    ```
 
     Alternatively, you can install the packages manually:
 
     ```bash
     pip install numpy matplotlib
+    ```
 
 3. **Set up the repository:**
 
@@ -46,6 +49,7 @@ The test_script.py file contains a predefined test case for verifying the FEM im
 
 ```bash
 python test_script.py
+```
 
 This script will execute a predefined FEM problem and display the displacements and plot the results.
 
@@ -55,6 +59,7 @@ The main.py file allows users to input their own parameters to define nodes, mat
 
 ```bash
 python main.py
+```
 
 Follow the prompts to enter your problem parameters. The script will perform the FEM analysis and display the displacements and plot the results.
 
