@@ -61,7 +61,6 @@ def run_test_case():
     model.solve()
     model.calculate_displacements()
     model.calculate_forces()
-    u = model.elements[0].get_local_displacement()
 
     # Print results
     model.generate_report()

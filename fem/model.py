@@ -90,6 +90,8 @@ class Model:
         for node in self.nodes:
             for i in range(node.dof):
                 node.displacement[i] = float(self.q[node.global_dof[i]])
+        for element in self.elements:
+            element.calculate_deformed()
     
     def calculate_forces(self):
         """
@@ -99,8 +101,16 @@ class Model:
             for i in range(node.dof):
                 node.force[i] = float(self.F[node.global_dof[i]])
 
+    def plot(self, factor = 1.0):
+        plt.figure()
+        for element in self.elements:
+            plt.plot(
+                element.xcurve+factor*element.xdeformed,
+                element.ycurve+factor*element.ydeformed
+            )
+        plt.show()
 
-    def get_positions(self):
+    '''def get_positions(self):
         """
         Retrieve the original and deformed positions of the nodes in the elements.
         """
@@ -137,7 +147,7 @@ class Model:
         plt.ylabel('Y Coordinate')
         plt.title('Undeformed and Deformed Shapes')
         plt.axis('equal')  # Ensure aspect ratio is equal to show accurate deformations
-        plt.show()
+        plt.show()'''
 
     def generate_report(self):
         report = f"Model Report: {self.name}\n"

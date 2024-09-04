@@ -12,10 +12,15 @@ class Element:
         self.element_id = element_id
         self.nodes = nodes
         self.property = property
-        self.local_displacement = None
+        self.q_local = None
         
         self.length = self.calculate_length()
         self.theta = self.calculate_rotation()
+
+        self.xivec = np.linspace(0,1,100)
+        self.xcurve, self.ycurve = self.element_curve()
+        self.xdeformed = self.xcurve
+        self.ydeformed = self.ycurve
 
     def calculate_length(self):
         """
@@ -33,10 +38,23 @@ class Element:
         x1, y1 = self.nodes[1].position
         return np.arctan2(y1 - y0, x1 - x0)
     
-    def get_local_displacement(self):
-        xivec = np.linspace(0,1,100)
-        disp = get
-        return u
+    def element_curve(self):
+        xivec = self.xivec
+        x0, y0 = self.nodes[0].position
+        x1, y1 = self.nodes[1].position
+        return [(1-xi)*x0+xi*x1 for xi in xivec], [(1-xi)*y0+xi*y1 for xi in xivec]
+    
+    def calculate_deformed(self):
+        xivec = self.xivec
+        disp = []
+        for node in self.nodes:
+            disp = disp + node.displacement
+        q_local = self.T @ np.array([disp]).T
+        local_disp_field = np.array([float(self.property.phi(xi) @ q_local) for xi in xivec])
+        self.q_local = q_local
+        self.xdeformed = self.xcurve+local_disp_field*np.cos(self.theta)
+        self.ydeformed = self.ycurve+local_disp_field*np.sin(self.theta)
+
 
     def __repr__(self):
         return f"Element(id={self.element_id}, nodes={[n.node_id for n in self.nodes]}, length={self.length:.2f}, rotation={np.degrees(self.theta):.2f}°)"
@@ -72,7 +90,7 @@ class RodElement(Element):
         return k * np.array([[1, -1],
                              [-1, 1]])
     
-    def get_local_displacement(self):
+    def get_displacement(self):
         disp = []
         for node in self.nodes:
             disp = disp + node.displacement
