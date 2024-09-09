@@ -90,8 +90,6 @@ class Model:
         for node in self.nodes:
             for i in range(node.dof):
                 node.displacement[i] = float(self.q[node.global_dof[i]])
-        for element in self.elements:
-            element.calculate_deformed()
     
     def calculate_forces(self):
         """
@@ -100,54 +98,33 @@ class Model:
         for node in self.nodes:
             for i in range(node.dof):
                 node.force[i] = float(self.F[node.global_dof[i]])
-
-    def plot(self, factor = 1.0):
-        plt.figure()
-        for element in self.elements:
-            plt.plot(
-                element.xcurve+factor*element.xdeformed,
-                element.ycurve+factor*element.ydeformed
-            )
-        plt.show()
-
-    '''def get_positions(self):
-        """
-        Retrieve the original and deformed positions of the nodes in the elements.
-        """
-        XX, YY, dXX, dYY = [], [], [], []
-        for element in self.elements:
-            xx, yy, dxx, dyy = [], [], [], []
-            for node in element.nodes:
-                xx.append(node.position[0])
-                yy.append(node.position[1])
-                dxx.append(node.displacement[0])
-                dyy.append(node.displacement[1])
-            XX.append(xx)
-            YY.append(yy)
-            dXX.append(dxx)
-            dYY.append(dyy)
-        return XX, YY, dXX, dYY
     
-    def plot(self, factor=1.0):
+    def caclulate_element_results(self):
+        for element in self.elements:
+            element.calculate_local_results()
+
+    
+    def plot(self, factor=0):
         """
         Plot the undeformed and deformed shapes of the model.
         
         :param factor: Scale factor for the deformed shape.
         """
         plt.figure(figsize=(10, 8))
-        XX, YY, dXX, dYY = self.get_positions()
-        
-        for xx, yy, dxx, dyy in zip(XX, YY, dXX, dYY):
-            plt.plot(xx, yy, 'o--', color='gray', label='Undeformed Shape')  # Undeformed shape
-            plt.plot([x + factor * dx for x, dx in zip(xx, dxx)], 
-                    [y + factor * dy for y, dy in zip(yy, dyy)], 
-                    'o-', color='blue', label='Deformed Shape')  # Deformed shape
-        
+        for element in self.elements:
+            xundef = np.array([element.nodes[0].position[0], element.nodes[1].position[0]])
+            yundef = np.array([element.nodes[0].position[1], element.nodes[1].position[1]])
+            xdef = xundef+factor*np.array([element.nodes[0].displacement[0], element.nodes[1].displacement[0]])
+            ydef = yundef+factor*np.array([element.nodes[0].displacement[1], element.nodes[1].displacement[1]])
+            plt.plot(xundef, yundef, 'o--', color='gray', label='Undeformed Shape')
+            plt.plot(xdef, ydef, 'o-', color='blue', label='Deformed Shape')
         plt.xlabel('X Coordinate')
         plt.ylabel('Y Coordinate')
         plt.title('Undeformed and Deformed Shapes')
         plt.axis('equal')  # Ensure aspect ratio is equal to show accurate deformations
-        plt.show()'''
+        plt.legend(['Undeformed Shape', 'Deformed Shape'])
+        plt.show()
+
 
     def generate_report(self):
         report = f"Model Report: {self.name}\n"
@@ -164,7 +141,10 @@ class Model:
         report += "  ----------------------\n"
         for i, node in enumerate(self.nodes):
             disp = node.displacement
-            report += f"    Node {i}: X = {disp[0]:.2f}, Y = {disp[1]:.2f}\n"
+            report += f"    Node {i}:"
+            for d in disp:
+                report+=f"\t{d:.4f}"
+            report+="\n"
 
         # Forces
         # Displacements
@@ -172,7 +152,25 @@ class Model:
         report += "  ----------------------\n"
         for i, node in enumerate(self.nodes):
             force = node.force
-            report += f"    Node {i}: X = {force[0]:.2f}, Y = {force[1]:.2f}\n"
+            report += f"    Node {i}:"
+            for f in force:
+                report+=f"\t{f:.0f}"
+            report+="\n"
+        
+        print(report)
+    
+
+    def element_report(self):
+        # Deformations
+        report = "\n  Deformations:\n"
+        report += "  ----------------------\n"
+        for i, element in enumerate(self.elements):
+            report += f"    Element {i}:\t{element.deformation:.4f}\n"
+        
+        report += "\n  Forces:\n"
+        report += "  ----------------------\n"
+        for i, element in enumerate(self.elements):
+            report += f"    Element {i}:\t{element.force:.4f}\n"
         
         print(report)
 

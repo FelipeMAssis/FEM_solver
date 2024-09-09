@@ -12,15 +12,15 @@ class Element:
         self.element_id = element_id
         self.nodes = nodes
         self.property = property
+        self.q_global = None
         self.q_local = None
+        self.deformation = None
+        self.force = None
         
         self.length = self.calculate_length()
         self.theta = self.calculate_rotation()
 
         self.xivec = np.linspace(0,1,100)
-        self.xcurve, self.ycurve = self.element_curve()
-        self.xdeformed = self.xcurve
-        self.ydeformed = self.ycurve
 
     def calculate_length(self):
         """
@@ -38,23 +38,8 @@ class Element:
         x1, y1 = self.nodes[1].position
         return np.arctan2(y1 - y0, x1 - x0)
     
-    def element_curve(self):
-        xivec = self.xivec
-        x0, y0 = self.nodes[0].position
-        x1, y1 = self.nodes[1].position
-        return [(1-xi)*x0+xi*x1 for xi in xivec], [(1-xi)*y0+xi*y1 for xi in xivec]
-    
-    def calculate_deformed(self):
-        xivec = self.xivec
-        disp = []
-        for node in self.nodes:
-            disp = disp + node.displacement
-        q_local = self.T @ np.array([disp]).T
-        local_disp_field = np.array([float(self.property.phi(xi) @ q_local) for xi in xivec])
-        self.q_local = q_local
-        self.xdeformed = self.xcurve+local_disp_field*np.cos(self.theta)
-        self.ydeformed = self.ycurve+local_disp_field*np.sin(self.theta)
-
+    def rotate_K(self):
+        return self.T.T @ self.K @ self.T
 
     def __repr__(self):
         return f"Element(id={self.element_id}, nodes={[n.node_id for n in self.nodes]}, length={self.length:.2f}, rotation={np.degrees(self.theta):.2f}°)"
@@ -64,7 +49,7 @@ class RodElement(Element):
         Element.__init__(self, element_id, nodes, property)
         self.T = self.calculate_rotation_matrix()
         self.K = self.calculate_stiffness_matrix()
-        self.K_global_coord = self.T.T @ self.K @ self.T
+        self.K_global_coord = super().rotate_K()
     
     def calculate_rotation_matrix(self):
         """
@@ -89,19 +74,23 @@ class RodElement(Element):
         # 2x2 stiffness matrix for a 1D rod element
         return k * np.array([[1, -1],
                              [-1, 1]])
-    
-    def get_displacement(self):
-        disp = []
-        for node in self.nodes:
-            disp = disp + node.displacement
-        self.local_displacement = self.T @ np.array([disp]).T
+
+    def calculate_local_results(self):
+        self.q_global = np.array(self.nodes[0].displacement+self.nodes[1].displacement)
+        self.q_local = self.T @ self.q_global
+        E = self.property.material.youngs_modulus
+        A = self.property.area
+        L = self.length
+        self.deformation = (self.q_local[1]-self.q_local[0])
+        self.force = E*A*self.deformation/L
+
           
 class BarElement(Element):
     def __init__(self, element_id, nodes, property):
         Element.__init__(self, element_id, nodes, property)
         self.T = self.calculate_rotation_matrix()
         self.K = self.calculate_stiffness_matrix()
-        self.K_global_coord = self.T.T @ self.K @ self.T
+        self.K_global_coord = super().rotate_K()
 
     def calculate_rotation_matrix(self):
         """
@@ -109,11 +98,11 @@ class BarElement(Element):
         """
         cos_theta = np.cos(self.theta)
         sin_theta = np.sin(self.theta)
-        return np.array([[cos_theta, -sin_theta, 0, 0, 0, 0],
-                         [sin_theta, cos_theta, 0, 0, 0, 0],
+        return np.array([[cos_theta, sin_theta, 0, 0, 0, 0],
+                         [-sin_theta, cos_theta, 0, 0, 0, 0],
                          [0, 0, 1, 0, 0, 0],
-                         [0, 0, 0, cos_theta, -sin_theta, 0],
-                         [0, 0, 0, sin_theta, cos_theta, 0],
+                         [0, 0, 0, cos_theta, sin_theta, 0],
+                         [0, 0, 0, -sin_theta, cos_theta, 0],
                          [0, 0, 0, 0, 0, 1]])
 
     def calculate_stiffness_matrix(self):

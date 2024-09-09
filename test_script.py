@@ -61,10 +61,13 @@ def run_test_case():
     model.solve()
     model.calculate_displacements()
     model.calculate_forces()
+    model.caclulate_element_results()
 
     # Print results
     model.generate_report()
-    model.plot(factor=1)
+    model.element_report()
+    model.element_report()
+    model.plot(1)
 
 if __name__ == "__main__":
     run_test_case()

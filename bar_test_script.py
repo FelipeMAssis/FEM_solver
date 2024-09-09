@@ -61,7 +61,7 @@ def run_test_case():
     model.calculate_forces()
     # Print results
     model.generate_report()
-    model.plot(factor=1)
+    model.plot(10)
 
 if __name__ == "__main__":
     run_test_case()
