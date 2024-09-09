@@ -120,7 +120,7 @@ class Model:
             plt.plot(xdef, ydef, 'o-', color='blue', label='Deformed Shape')
         plt.xlabel('X Coordinate')
         plt.ylabel('Y Coordinate')
-        plt.title('Undeformed and Deformed Shapes')
+        plt.title(f'Undeformed and Deformed Shapes (Scale factor = {factor:.1f})')
         plt.axis('equal')  # Ensure aspect ratio is equal to show accurate deformations
         plt.legend(['Undeformed Shape', 'Deformed Shape'])
         plt.show()
@@ -154,7 +154,7 @@ class Model:
             force = node.force
             report += f"    Node {i}:"
             for f in force:
-                report+=f"\t{f:.0f}"
+                report+=f"\t{f:.4f}"
             report+="\n"
         
         print(report)
