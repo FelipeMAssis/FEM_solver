@@ -1,47 +1,87 @@
 import numpy as np
 from fem.material import Material
 
-class Rod:
-    def __init__(self, property_id: int, name: str, material: Material, area: float):
+class Property:
+    property_count = 0
+
+    def __init__(self, name: str):
+        """
+        Initialize a Property.
+
+        :param name: Name of the property.
+        """
+        self.id = Property.property_count
+        Property.property_count += 1
+        self.name = name
+
+    def __repr__(self) -> str:
+        return (f"Property:\n ID = {self.id}\n Name = {self.name}\n"
+                f"Material = {self.material.material_id}\n")
+
+
+class Rod(Property):
+    def __init__(self, name: str, material: Material, area: float):
         """
         Initialize a Rod.
-        
-        :param property_id: Unique identifier for the rod.
+
         :param name: Name of the rod.
         :param material: Material object associated with the rod.
         :param area: Cross-sectional area of the rod.
         """
-        self.property_id = property_id
-        self.name = name
+        super().__init__(name)
         self.material = material
         self.area = area
 
     def phi(self, xi):
-        return np.array([[1-xi, xi]])
-
-    def __repr__(self) -> str:
-        return (f"Rod: {self.name}(id={self.property_id}, "
-                f"material={self.material.material_id}, area={self.area})")
-
-
-class Bar2D:
-    def __init__(self, property_id: int, name: str, material: Material, area: float, Izz: float):
         """
-        Initialize a 2D Bar.
+        Shape function for the rod element.
         
-        :param property_id: Unique identifier for the rod.
-        :param name: Name of the rod.
-        :param material: Material object associated with the rod.
-        :param area: Cross-sectional area of the rod.
-        :param Iyy: 
+        :param xi: Local coordinate along the length of the rod (typically from 0 to 1).
+        :return: Shape function evaluated at xi.
         """
-        self.property_id = property_id
-        self.name = name
+        return np.array([[1 - xi, xi]])
+
+
+class Beam2D(Property):
+    def __init__(self, name: str, material: Material, area: float, Izz: float):
+        """
+        Initialize a 2D Beam.
+
+        :param name: Name of the beam.
+        :param material: Material object associated with the beam.
+        :param area: Cross-sectional area of the beam.
+        :param Izz: Second moment of area (moment of inertia) about the z-axis.
+        """
+        super().__init__(name)
         self.material = material
         self.area = area
         self.Izz = Izz
 
     def __repr__(self) -> str:
-        return (f"Bar: {self.name}(id={self.property_id}, "
-                f"material={self.material.material_id}, area={self.area}, Izz={self.Izz})")
+        return (f"Beam2D:\n ID = {self.id}\n Name = {self.name}\n"
+                f"Material = {self.material.material_id}\n Area = {self.area}\n Izz = {self.Izz}")
+
+class Membrane(Property):
+    def __init__(self, name: str, material: Material, t: float, plane_stress=True):
+        """
+        Initialize a Membrane.
+
+        :param name: Name of the membrane.
+        :param material: Material object associated with the membrane.
+        :param t: Thickness of the membrane.
+        :param plane_stress: Boolean indicating if the membrane is under plane stress conditions (default is True).
+        """
+        super().__init__(name)  # Use super() to call the parent constructor
+        self.material = material
+        self.thickness = t  # Renamed 't' to 'thickness' for clarity
+        self.plane_stress = plane_stress
+
+    def __repr__(self) -> str:
+        """
+        String representation of the Membrane.
+        """
+        stress_condition = "Plane Stress" if self.plane_stress else "Plane Strain"
+        return (f"Membrane:\n ID = {self.id}\n Name = {self.name}\n"
+                f"Material = {self.material.material_id}\n Thickness = {self.thickness}\n"
+                f"Condition = {stress_condition}")
 
