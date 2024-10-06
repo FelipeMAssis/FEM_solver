@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+from fem.output import Output
 
 class Model:
     def __init__(self, nodes=None, materials=None, properties=None, elements=None, loads=None, constraints=None, name='MyModel'):
@@ -21,10 +21,6 @@ class Model:
         self.loads = loads or []
         self.constraints = constraints or []
         self.name = name
-        
-        self.K = None  # Global stiffness matrix
-        self.F = None  # Global force vector
-        self.q = None  # Global displacement vector
 
     def assign_global_dof(self):
         """
@@ -69,7 +65,7 @@ class Model:
             dof = node.global_dof[load.dof]
             self.F[dof] = load.value
 
-    def solve(self):
+    def solve_eqs(self):
         """
         Solve for the unknown displacements using the reduced system of equations.
         """
@@ -82,106 +78,12 @@ class Model:
             self.q[dof] = q_red[i]
         
         self.F = np.dot(self.K, self.q)
-
-    def calculate_displacements(self):
-        """
-        Update the displacement for each node based on the global displacement vector.
-        """
-        for node in self.nodes:
-            for i in range(node.dof):
-                node.displacement[i] = float(self.q[node.global_dof[i]])
     
-    def calculate_forces(self):
-        """
-        Update the displacement for each node based on the global displacement vector.
-        """
-        for node in self.nodes:
-            for i in range(node.dof):
-                node.force[i] = float(self.F[node.global_dof[i]])
-    
-    def caclulate_element_results(self):
-        for element in self.elements:
-            element.calculate_local_results()
-
-    
-    def plot(self, factor=0):
-        """
-        Plot the undeformed and deformed shapes of the model.
-        
-        :param factor: Scale factor for the deformed shape.
-        """
-        plt.figure(figsize=(10, 8))
-        for element in self.elements:
-            xundef = np.array([element.nodes[0].position[0], element.nodes[1].position[0]])
-            yundef = np.array([element.nodes[0].position[1], element.nodes[1].position[1]])
-            xdef = xundef+factor*np.array([element.nodes[0].displacement[0], element.nodes[1].displacement[0]])
-            ydef = yundef+factor*np.array([element.nodes[0].displacement[1], element.nodes[1].displacement[1]])
-            plt.plot(xundef, yundef, 'o--', color='gray', label='Undeformed Shape')
-            plt.plot(xdef, ydef, 'o-', color='blue', label='Deformed Shape')
-        plt.xlabel('X Coordinate')
-        plt.ylabel('Y Coordinate')
-        plt.title(f'Undeformed and Deformed Shapes (Scale factor = {factor:.1f})')
-        plt.axis('equal')  # Ensure aspect ratio is equal to show accurate deformations
-        plt.legend(['Undeformed Shape', 'Deformed Shape'])
-        plt.show()
-
-
-    def generate_report(self):
-        report = f"Model Report: {self.name}\n"
-        report += f"  Number of Nodes       : {len(self.nodes)}\n"
-        report += f"  Number of Elements    : {len(self.elements)}\n"
-        report += f"  Number of Materials   : {len(self.materials)}\n"
-        report += f"  Number of Properties  : {len(self.properties)}\n"
-        report += f"  Number of Loads       : {len(self.loads)}\n"
-        report += f"  Number of Constraints : {len(self.constraints)}\n"
-        report += f"  Global DOF            : {self.K.shape[0] if self.K is not None else 'Not assigned'}\n"
-
-        # Displacements
-        report += "\n  Displacements:\n"
-        report += "  ----------------------\n"
-        for i, node in enumerate(self.nodes):
-            disp = node.displacement
-            report += f"    Node {i}:"
-            for d in disp:
-                report+=f"\t{d:.4f}"
-            report+="\n"
-
-        # Forces
-        # Displacements
-        report += "\n  Forces:\n"
-        report += "  ----------------------\n"
-        for i, node in enumerate(self.nodes):
-            force = node.force
-            report += f"    Node {i}:"
-            for f in force:
-                report+=f"\t{f:.4f}"
-            report+="\n"
-        
-        print(report)
-    
-
-    def element_report(self):
-        # Deformations
-        report = "\n  Deformations:\n"
-        report += "  ----------------------\n"
-        for i, element in enumerate(self.elements):
-            report += f"    Element {i}:\t{element.deformation:.4f}\n"
-        
-        report += "\n  Forces:\n"
-        report += "  ----------------------\n"
-        for i, element in enumerate(self.elements):
-            report += f"    Element {i}:\t{element.force:.4f}\n"
-        
-        print(report)
-
-
-    def __repr__(self):
-        return (f"Model: {self.name}\n"
-                f"  * Number of Nodes       : {len(self.nodes)}\n"
-                f"  * Number of Elements    : {len(self.elements)}\n"
-                f"  * Number of Materials   : {len(self.materials)}\n"
-                f"  * Number of Properties  : {len(self.properties)}\n"
-                f"  * Number of Loads       : {len(self.loads)}\n"
-                f"  * Number of Constraints : {len(self.constraints)}\n"
-                f"  * Global DOF            : {self.K.shape[0] if self.K is not None else 'Not assigned'}\n")
+    def solve(self):
+        self.assign_global_dof()
+        self.assemble_stiffness_matrix()
+        self.assemble_displacements_vector()
+        self.assemble_force_vector()
+        self.solve_eqs()
+        return Output(self)
 
