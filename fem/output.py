@@ -48,7 +48,7 @@ class Output:
             yundef = np.array([element.nodes[0].position[1], element.nodes[1].position[1]])
             xdef = xundef+factor*np.array([element.nodes[0].displacement[0], element.nodes[1].displacement[0]])
             ydef = yundef+factor*np.array([element.nodes[0].displacement[1], element.nodes[1].displacement[1]])
-            plt.plot(xundef, yundef, '--', color='gray', label='Undeformed Shape')
+            plt.plot(xundef, yundef, 'o--', color='gray', label='Undeformed Shape')
 
             if text == 'Deformation':
                 plt.text(np.mean(xdef),np.mean(ydef),"{:.2f}".format(element.deformation))
@@ -67,15 +67,21 @@ class Output:
                 color = 'k'
             plt.plot(xdef, ydef, 'o-', markerfacecolor='k', markeredgecolor='k', color=color, label='Deformed Shape')
 
+        scalex = max([abs(n.position[0]+factor*n.displacement[0]) for n in self.nodes])
+        scaley = max([abs(n.position[1]+factor*n.displacement[1]) for n in self.nodes])
+        scale = max([scalex,scaley])
+
+        scalef = max([abs(l.value) for l in self.loads])
+
         if show_constraints:
             for constraint in self.constraints:
-                x, y = self.nodes[constraint.node].position
-                plt.arrow(x-0.1*(1-constraint.dof), y-0.1*constraint.dof, 0.1*(1-constraint.dof), 0.1*constraint.dof, head_length=100, head_width=50, length_includes_head=True, color='cyan')
+                x, y = [p+factor*d for p, d in zip(self.nodes[constraint.node].position, self.nodes[constraint.node].displacement)]
+                plt.arrow(x-0.1*(1-constraint.dof), y-0.1*constraint.dof, 0.1*(1-constraint.dof), 0.1*constraint.dof, head_length=0.04*scale, head_width=0.02*scale, length_includes_head=True, color='cyan')
 
         if show_force:
             for load in self.loads:
-                x, y = self.nodes[load.node].position
-                plt.arrow(x, y, load.value*(1-load.dof)/10, load.value*load.dof/10, head_length=100, head_width=50, length_includes_head=True, color='green')
+                x, y = [p+factor*d for p, d in zip(self.nodes[load.node].position, self.nodes[load.node].displacement)]
+                plt.arrow(x, y, load.value*(1-load.dof)*0.5*scale/scalef, load.value*load.dof*0.5*scale/scalef, head_length=0.04*scale, head_width=0.02*scale, length_includes_head=True, color='green')
 
         plt.xlabel('X Coordinate')
         plt.ylabel('Y Coordinate')
@@ -84,67 +90,38 @@ class Output:
         plt.legend(['Undeformed Shape', 'Deformed Shape'])
         plt.show()
 
-    '''
-    def caclulate_element_results(self):
+    def plot2DArea(self, factor=0, show_constraints=False, show_force=False):
+        plt.figure(figsize=(10, 8))
+
         for element in self.elements:
-            element.calculate_local_results()
+            xundef = np.array([element.nodes[0].position[0], element.nodes[1].position[0], element.nodes[2].position[0], element.nodes[0].position[0]])
+            yundef = np.array([element.nodes[0].position[1], element.nodes[1].position[1], element.nodes[2].position[1], element.nodes[0].position[1]])
+            xdef = xundef+factor*np.array([element.nodes[0].displacement[0], element.nodes[1].displacement[0], element.nodes[2].displacement[0], element.nodes[0].displacement[0]])
+            ydef = yundef+factor*np.array([element.nodes[0].displacement[1], element.nodes[1].displacement[1], element.nodes[2].displacement[1], element.nodes[0].displacement[1]])
+            plt.plot(xundef, yundef, 'o--', color='gray', label='Undeformed Shape')
+            plt.fill(xundef, yundef, color='gray', alpha=0.2, label='_nolegend_')
+            plt.plot(xdef, ydef, 'o-', markerfacecolor='k', markeredgecolor='k', color='k', label='Deformed Shape')
+            plt.fill(xdef, ydef, color='k', alpha=0.2,label='_nolegend_')
 
+        scalex = max([abs(n.position[0]+factor*n.displacement[0]) for n in self.nodes])
+        scaley = max([abs(n.position[1]+factor*n.displacement[1]) for n in self.nodes])
+        scale = max(scalex,scaley)
 
-    def generate_report(self):
-        report = f"Model Report: {self.name}\n"
-        report += f"  Number of Nodes       : {len(self.nodes)}\n"
-        report += f"  Number of Elements    : {len(self.elements)}\n"
-        report += f"  Number of Materials   : {len(self.materials)}\n"
-        report += f"  Number of Properties  : {len(self.properties)}\n"
-        report += f"  Number of Loads       : {len(self.loads)}\n"
-        report += f"  Number of Constraints : {len(self.constraints)}\n"
-        report += f"  Global DOF            : {self.K.shape[0] if self.K is not None else 'Not assigned'}\n"
+        scalef = max([abs(l.value) for l in self.loads])
 
-        # Displacements
-        report += "\n  Displacements:\n"
-        report += "  ----------------------\n"
-        for i, node in enumerate(self.nodes):
-            disp = node.displacement
-            report += f"    Node {i}:"
-            for d in disp:
-                report+=f"\t{d:.4f}"
-            report+="\n"
+        if show_constraints:
+            for constraint in self.constraints:
+                x, y = [p+factor*d for p, d in zip(self.nodes[constraint.node].position, self.nodes[constraint.node].displacement)]
+                plt.arrow(x-0.1*(1-constraint.dof), y-0.1*constraint.dof, 0.1*(1-constraint.dof), 0.1*constraint.dof, head_length=0.04*scale, head_width=0.02*scale, length_includes_head=True, color='cyan')
 
-        # Forces
-        # Displacements
-        report += "\n  Forces:\n"
-        report += "  ----------------------\n"
-        for i, node in enumerate(self.nodes):
-            force = node.force
-            report += f"    Node {i}:"
-            for f in force:
-                report+=f"\t{f:.4f}"
-            report+="\n"
-        
-        print(report)
-    
+        if show_force:
+            for load in self.loads:
+                x, y = [p+factor*d for p, d in zip(self.nodes[load.node].position, self.nodes[load.node].displacement)]
+                plt.arrow(x, y, load.value*(1-load.dof)*0.5*scale/scalef, load.value*load.dof*0.5*scale/scalef, head_length=0.04*scale, head_width=0.02*scale, length_includes_head=True, color='green')
 
-    def element_report(self):
-        # Deformations
-        report = "\n  Deformations:\n"
-        report += "  ----------------------\n"
-        for i, element in enumerate(self.elements):
-            report += f"    Element {i}:\t{element.deformation:.4f}\n"
-        
-        report += "\n  Forces:\n"
-        report += "  ----------------------\n"
-        for i, element in enumerate(self.elements):
-            report += f"    Element {i}:\t{element.force:.4f}\n"
-        
-        print(report)
-
-
-    def __repr__(self):
-        return (f"Model: {self.name}\n"
-                f"  * Number of Nodes       : {len(self.nodes)}\n"
-                f"  * Number of Elements    : {len(self.elements)}\n"
-                f"  * Number of Materials   : {len(self.materials)}\n"
-                f"  * Number of Properties  : {len(self.properties)}\n"
-                f"  * Number of Loads       : {len(self.loads)}\n"
-                f"  * Number of Constraints : {len(self.constraints)}\n")
-    '''
+        plt.xlabel('X Coordinate')
+        plt.ylabel('Y Coordinate')
+        plt.title(f'Undeformed and Deformed Shapes (Scale factor = {factor:.1f})')
+        plt.axis('equal')  # Ensure aspect ratio is equal to show accurate deformations
+        plt.legend(['Undeformed Shape', 'Deformed Shape'])
+        plt.show()
