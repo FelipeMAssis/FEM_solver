@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.markers import MarkerStyle
+from fem.element import ElementRod, ElementBeam, ElementCST
 
 cmap = plt.get_cmap('jet')
 
@@ -44,28 +44,29 @@ class Output:
             min_value = min(values)
 
         for element in self.elements:
-            xundef = np.array([element.nodes[0].position[0], element.nodes[1].position[0]])
-            yundef = np.array([element.nodes[0].position[1], element.nodes[1].position[1]])
-            xdef = xundef+factor*np.array([element.nodes[0].displacement[0], element.nodes[1].displacement[0]])
-            ydef = yundef+factor*np.array([element.nodes[0].displacement[1], element.nodes[1].displacement[1]])
-            plt.plot(xundef, yundef, 'o--', color='gray', label='Undeformed Shape')
+            if type(element) == ElementRod or type(element) == ElementBeam:
+                xundef = np.array([element.nodes[0].position[0], element.nodes[1].position[0]])
+                yundef = np.array([element.nodes[0].position[1], element.nodes[1].position[1]])
+                xdef = xundef+factor*np.array([element.nodes[0].displacement[0], element.nodes[1].displacement[0]])
+                ydef = yundef+factor*np.array([element.nodes[0].displacement[1], element.nodes[1].displacement[1]])
+                plt.plot(xundef, yundef, 'o--', color='gray', label='Undeformed Shape')
 
-            if text == 'Deformation':
-                plt.text(np.mean(xdef),np.mean(ydef),"{:.2f}".format(element.deformation))
-            elif text == 'Force':
-                plt.text(np.mean(xdef),np.mean(ydef),"{:.0f}".format(element.force))
-
-            if contour == 'Deformation':
-                color = cmap(0.1+0.8*(element.deformation-min_value)/(max_value-min_value))
-                
-            elif contour == 'Force':
-                if text:
+                if text == 'Deformation':
+                    plt.text(np.mean(xdef),np.mean(ydef),"{:.2f}".format(element.deformation))
+                elif text == 'Force':
                     plt.text(np.mean(xdef),np.mean(ydef),"{:.0f}".format(element.force))
-                color = cmap(0.1+0.8*(element.force-min_value)/(max_value-min_value))
-                
-            else:
-                color = 'k'
-            plt.plot(xdef, ydef, 'o-', markerfacecolor='k', markeredgecolor='k', color=color, label='Deformed Shape')
+
+                if contour == 'Deformation':
+                    color = cmap(0.1+0.8*(element.deformation-min_value)/(max_value-min_value))
+                    
+                elif contour == 'Force':
+                    if text:
+                        plt.text(np.mean(xdef),np.mean(ydef),"{:.0f}".format(element.force))
+                    color = cmap(0.1+0.8*(element.force-min_value)/(max_value-min_value))
+                    
+                else:
+                    color = 'k'
+                plt.plot(xdef, ydef, 'o-', markerfacecolor='k', markeredgecolor='k', color=color, label='Deformed Shape')
 
         scalex = max([abs(n.position[0]+factor*n.displacement[0]) for n in self.nodes])
         scaley = max([abs(n.position[1]+factor*n.displacement[1]) for n in self.nodes])
@@ -94,14 +95,15 @@ class Output:
         plt.figure(figsize=(10, 8))
 
         for element in self.elements:
-            xundef = np.array([element.nodes[0].position[0], element.nodes[1].position[0], element.nodes[2].position[0], element.nodes[0].position[0]])
-            yundef = np.array([element.nodes[0].position[1], element.nodes[1].position[1], element.nodes[2].position[1], element.nodes[0].position[1]])
-            xdef = xundef+factor*np.array([element.nodes[0].displacement[0], element.nodes[1].displacement[0], element.nodes[2].displacement[0], element.nodes[0].displacement[0]])
-            ydef = yundef+factor*np.array([element.nodes[0].displacement[1], element.nodes[1].displacement[1], element.nodes[2].displacement[1], element.nodes[0].displacement[1]])
-            plt.plot(xundef, yundef, 'o--', color='gray', label='Undeformed Shape')
-            plt.fill(xundef, yundef, color='gray', alpha=0.2, label='_nolegend_')
-            plt.plot(xdef, ydef, 'o-', markerfacecolor='k', markeredgecolor='k', color='k', label='Deformed Shape')
-            plt.fill(xdef, ydef, color='k', alpha=0.2,label='_nolegend_')
+            if type(element) == ElementCST:
+                xundef = np.array([element.nodes[0].position[0], element.nodes[1].position[0], element.nodes[2].position[0], element.nodes[0].position[0]])
+                yundef = np.array([element.nodes[0].position[1], element.nodes[1].position[1], element.nodes[2].position[1], element.nodes[0].position[1]])
+                xdef = xundef+factor*np.array([element.nodes[0].displacement[0], element.nodes[1].displacement[0], element.nodes[2].displacement[0], element.nodes[0].displacement[0]])
+                ydef = yundef+factor*np.array([element.nodes[0].displacement[1], element.nodes[1].displacement[1], element.nodes[2].displacement[1], element.nodes[0].displacement[1]])
+                plt.plot(xundef, yundef, 'o--', color='gray', label='Undeformed Shape')
+                plt.fill(xundef, yundef, color='gray', alpha=0.2, label='_nolegend_')
+                plt.plot(xdef, ydef, 'o-', markerfacecolor='k', markeredgecolor='k', color='k', label='Deformed Shape')
+                plt.fill(xdef, ydef, color='k', alpha=0.2,label='_nolegend_')
 
         scalex = max([abs(n.position[0]+factor*n.displacement[0]) for n in self.nodes])
         scaley = max([abs(n.position[1]+factor*n.displacement[1]) for n in self.nodes])
